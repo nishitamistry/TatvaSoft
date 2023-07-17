@@ -1,20 +1,22 @@
 import React, { useEffect, useState } from "react";
 import { cartStyle } from "./style";
 import { Typography, Button, Link } from "@material-ui/core";
+import { useSelector, useDispatch } from "react-redux";
+import { fetchCartData, removeFromCart } from "../../State/Slice/cartSlice";
 import cartService from "../../service/cart.service";
 import { useAuthContext } from "../../context/auth";
 import { toast } from "react-toastify";
 import orderService from "../../service/order.service";
 import Shared from "../../utils/shared";
-import { useCartContext } from "../../context/cart";
 import { useNavigate } from "react-router-dom";
+import { CartContext } from "../../context/cart";
 
 const Cart = () => {
   const authContext = useAuthContext();
-  const cartContext = useCartContext();
+  const dispatch = useDispatch();
+  const cartList = useSelector((state) => state.cart.cartData);
   const navigate = useNavigate();
 
-  const [cartList, setCartList] = useState([]);
   const [itemsInCart, setItemsInCart] = useState(0);
   const [totalPrice, setTotalPrice] = useState(0);
 
@@ -30,22 +32,24 @@ const Cart = () => {
   };
 
   useEffect(() => {
-    setCartList(cartContext.cartData);
-    setItemsInCart(cartContext.cartData.length);
-    getTotalPrice(cartContext.cartData);
-  }, [cartContext.cartData]);
+    dispatch(fetchCartData(authContext.user.id));
+  }, [dispatch, authContext.user.id]);
+
+  useEffect(() => {
+    setItemsInCart(cartList.length);
+    getTotalPrice(cartList);
+  }, [cartList]);
 
   const removeItem = async (id) => {
     try {
       const res = await cartService.removeItem(id);
       if (res) {
-        cartContext.updateCart();
+        dispatch(removeFromCart(id));
       }
     } catch (error) {
       toast.error("Something went wrong!");
     }
   };
-
   const updateQuantity = async (cartItem, inc) => {
     const currentCount = cartItem.quantity;
     const quantity = inc ? currentCount + 1 : currentCount - 1;
@@ -65,7 +69,7 @@ const Cart = () => {
         const updatedCartList = cartList.map((item) =>
           item.id === cartItem.id ? { ...item, quantity } : item
         );
-        cartContext.updateCart(updatedCartList);
+        CartContext.updateCart(updatedCartList);
         const updatedPrice =
           totalPrice +
           (inc
@@ -90,7 +94,7 @@ const Cart = () => {
           };
           const res = await orderService.placeOrder(newOrder);
           if (res) {
-            cartContext.updateCart();
+            CartContext.updateCart();
             navigate("/");
             toast.success(Shared.messages.ORDER_SUCCESS);
           }

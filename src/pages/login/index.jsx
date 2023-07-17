@@ -1,4 +1,3 @@
-import React, { useContext } from "react";
 import { loginStyle } from "./style";
 import {
   Breadcrumbs,
@@ -11,15 +10,17 @@ import {
 } from "@material-ui/core";
 import { Formik } from "formik";
 import ValidationErrorMessage from "../../components/ValidationErrorMessage";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import * as Yup from "yup";
 import authService from "../../service/auth.service";
 import { toast } from "react-toastify";
-import { useAuthContext } from "../../context/auth";
+import { useDispatch, useSelector } from "react-redux";
+import { setUser } from "../../State/Slice/authSlice"; 
 
 export const Login = () => {
   const navigate = useNavigate();
-  const authContext = useAuthContext();
+  const dispatch = useDispatch(); 
+  const user = useSelector(state => state.auth.user);
 
   const initialValues = {
     email: "",
@@ -27,12 +28,8 @@ export const Login = () => {
   };
 
   const validationSchema = Yup.object().shape({
-    email: Yup.string()
-      .email("Email is not valid")
-      .required("Email is required"),
-    password: Yup.string()
-      .min(5, "Password must be more than 5 charector")
-      .required("Password is required."),
+    email: Yup.string().email("Email is not valid").required("Email is required"),
+    password: Yup.string().min(5, "Password must be more than 5 characters").required("Password is required."),
   });
 
   const classes = loginStyle();
@@ -40,8 +37,12 @@ export const Login = () => {
   const onSubmit = (data) => {
     authService.login(data).then((res) => {
       toast.success("Login successfully");
-      authContext.setUser(res);
-    });
+      dispatch(setUser(res));
+      
+    }).then(resp=>{
+      navigate("/");
+    }
+      )
   };
 
   return (
@@ -106,16 +107,13 @@ export const Login = () => {
                         <TextField
                           id="email"
                           name="email"
-                          onBlur={handleBlur}
                           onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values.email}
                           label="Email Address *"
                           autoComplete="off"
                           variant="outlined"
                           inputProps={{ className: "small" }}
-                        />
-                        <ValidationErrorMessage
-                          message={errors.email}
-                          touched={touched.email}
                         />
                       </div>
                       <div className="form-col">
@@ -125,8 +123,9 @@ export const Login = () => {
                           label="Password *"
                           type="password"
                           variant="outlined"
-                          onBlur={handleBlur}
                           onChange={handleChange}
+                          onBlur={handleBlur}
+                          value={values.password}
                           inputProps={{ className: "small" }}
                           autoComplete="off"
                         />
@@ -142,7 +141,6 @@ export const Login = () => {
                           variant="contained"
                           color="primary"
                           disableElevation
-                          onClick={handleSubmit}
                         >
                           Login
                         </Button>

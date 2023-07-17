@@ -1,5 +1,7 @@
 import React from "react";
 import { createAccountStyle } from "./style";
+import { useSelector, useDispatch } from "react-redux";
+import { setUser } from "../../State/Slice/authSlice";
 import {
   Breadcrumbs,
   Link,
@@ -18,12 +20,14 @@ import authService from "../../service/auth.service";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import { materialCommonStyles } from "../../utils/materialCommonStyles";
-// import userService from "../../service/user.service";
+import useValidation from "../../customhooks/useValidation";
 
 const Register = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
   const classes = createAccountStyle();
   const materialClasses = materialCommonStyles();
-  const navigate = useNavigate();
+  const user = useSelector((state) => state.auth.user);
   const initialValues = {
     firstName: "",
     lastName: "",
@@ -32,50 +36,39 @@ const Register = () => {
     password: "",
     confirmPassword: "",
   };
+
   const roleList = [
     { id: 3, name: "buyer" },
     { id: 2, name: "seller" },
   ];
-  // const [roleList, setRoleList] = useState([]);
-
-  // useEffect(() => {
-  //   if (roleList.length) return;
-  //   getRoles();
-  // }, [roleList]);
-
-  // const getRoles = () => {
-  //   userService.getAllRoles().then((res) => {
-  //     setRoleList(res);
-  //   });
-  // };
-
-  const validationSchema = Yup.object().shape({
-    email: Yup.string()
-      .email("Invalid email address format")
-      .required("Email is required"),
-    password: Yup.string()
-      .min(5, "Password must be 5 characters at minimum")
-      .required("Password is required"),
-    confirmPassword: Yup.string()
-      .oneOf(
-        [Yup.ref("password"), null],
-        "Password and Confirm Password must be match."
-      )
-      .required("Confirm Password is required."),
-    firstName: Yup.string().required("First name is required"),
-    lastName: Yup.string().required("Last name is required"),
-    roleId: Yup.number().required("Role is required"),
-  });
+useValidation();
+  // const validationSchema = Yup.object().shape({
+  //   email: Yup.string()
+  //     .email("Invalid email address format")
+  //     .required("Email is required"),
+  //   password: Yup.string()
+  //     .min(5, "Password must be 5 characters at minimum")
+  //     .required("Password is required"),
+  //   confirmPassword: Yup.string()
+  //     .oneOf(
+  //       [Yup.ref("password"), null],
+  //       "Password and Confirm Password must match."
+  //     )
+  //     .required("Confirm Password is required."),
+  //   firstName: Yup.string().required("First name is required"),
+  //   lastName: Yup.string().required("Last name is required"),
+  //   roleId: Yup.number().required("Role is required"),
+  // });
 
   const onSubmit = (data) => {
-    console.log(data);
     delete data.confirmPassword;
     authService.create(data).then((res) => {
+      dispatch(setUser(res));
       navigate("/login");
-    
       toast.success("Successfully registered");
     });
   };
+
   return (
     <div className={classes.createAccountWrapper}>
       <div className="create-account-page-wrapper">
@@ -95,7 +88,7 @@ const Register = () => {
           <div className="create-account-row">
             <Formik
               initialValues={initialValues}
-              validationSchema={validationSchema}
+              validationSchema={useValidation()}
               onSubmit={onSubmit}
             >
               {({
@@ -119,6 +112,7 @@ const Register = () => {
                           <TextField
                             id="first-name"
                             name="firstName"
+                            type="text"
                             label="First Name *"
                             variant="outlined"
                             inputProps={{ className: "small" }}
@@ -133,12 +127,13 @@ const Register = () => {
                         <div className="form-col">
                           <TextField
                             onBlur={handleBlur}
-                            onChange={handleChange}
                             id="last-name"
                             name="lastName"
+                            type="text"
                             label="Last Name *"
                             variant="outlined"
                             inputProps={{ className: "small" }}
+                            onChange={handleChange}
                           />
                           <ValidationErrorMessage
                             message={errors.lastName}
@@ -148,12 +143,13 @@ const Register = () => {
                         <div className="form-col">
                           <TextField
                             onBlur={handleBlur}
-                            onChange={handleChange}
                             id="email"
                             name="email"
+                            type="email"
                             label="Email Address *"
                             variant="outlined"
                             inputProps={{ className: "small" }}
+                            onChange={handleChange}
                           />
                           <ValidationErrorMessage
                             message={errors.email}
@@ -170,22 +166,21 @@ const Register = () => {
                               name="roleId"
                               id={"roleId"}
                               inputProps={{ className: "small" }}
-                              onChange={handleChange}
                               className={materialClasses.customSelect}
                               MenuProps={{
                                 classes: {
                                   paper: materialClasses.customSelect,
                                 },
                               }}
-                              value={values.roleId}
+                              onChange={handleChange}
                             >
                               {roleList.length > 0 &&
-                                roleList.map((role) => (
+                                roleList.map((Role) => (
                                   <MenuItem
-                                    value={role.id}
-                                    key={"name" + role.id}
+                                    value={Role.id}
+                                    key={"name" + Role.id}
                                   >
-                                    {role.name}
+                                    {Role.name}
                                   </MenuItem>
                                 ))}
                             </Select>
@@ -200,13 +195,13 @@ const Register = () => {
                         <div className="form-col">
                           <TextField
                             onBlur={handleBlur}
-                            onChange={handleChange}
                             id="password"
                             type="password"
                             name="password"
                             label="Password *"
                             variant="outlined"
                             inputProps={{ className: "small" }}
+                            onChange={handleChange}
                           />
                           <ValidationErrorMessage
                             message={errors.password}
@@ -217,12 +212,12 @@ const Register = () => {
                           <TextField
                             type="password"
                             onBlur={handleBlur}
-                            onChange={handleChange}
                             id="confirm-password"
                             name="confirmPassword"
                             label="Confirm Password *"
                             variant="outlined"
                             inputProps={{ className: "small" }}
+                            onChange={handleChange}
                           />
                           <ValidationErrorMessage
                             message={errors.confirmPassword}

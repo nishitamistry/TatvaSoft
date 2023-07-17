@@ -9,14 +9,14 @@ import {
   TextField,
   Typography,
 } from "@material-ui/core";
-import { Pagination } from "@mui/material";
+import { Pagination } from "@material-ui/lab";
 import { useAuthContext } from "../../context/auth";
 import { materialCommonStyles } from "../../utils/materialCommonStyles";
 import { defaultFilter } from "../../constant/constant";
 import categoryService from "../../service/category.service";
 import bookService from "../../service/book.service";
 import { useCartContext } from "../../context/cart";
-import Shared from "../../utils/shared";
+import shared from "../../utils/shared";
 import { toast } from "react-toastify";
 
 export const BookListing = () => {
@@ -75,7 +75,7 @@ export const BookListing = () => {
   }, [categories, bookResponse]);
 
   const addToCart = (book) => {
-    Shared.addToCart(book, authContext.user.id).then((res) => {
+    shared.addToCart(book, authContext.user.id).then((res) => {
       if (res.error) {
         toast.error(res.message);
       } else {
